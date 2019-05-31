@@ -19,51 +19,63 @@ export class GildedRose {
 
     updateQuality() {
         for (let i = 0; i < this.items.length; i++) {
-            if (this.items[i].name != 'Aged Brie' && this.items[i].name != 'Backstage passes to a TAFKAL80ETC concert') {
-                if (this.items[i].quality > 0) {
-                    if (this.items[i].name != 'Sulfuras, Hand of Ragnaros') {
-                        this.items[i].quality = this.items[i].quality - 1
-                    }
-                }
-            } else {
-                if (this.items[i].quality < 50) {
-                    this.items[i].quality = this.items[i].quality + 1
-                    if (this.items[i].name == 'Backstage passes to a TAFKAL80ETC concert') {
-                        if (this.items[i].sellIn < 11) {
-                            if (this.items[i].quality < 50) {
-                                this.items[i].quality = this.items[i].quality + 1
-                            }
-                        }
-                        if (this.items[i].sellIn < 6) {
-                            if (this.items[i].quality < 50) {
-                                this.items[i].quality = this.items[i].quality + 1
-                            }
-                        }
-                    }
-                }
-            }
-            if (this.items[i].name != 'Sulfuras, Hand of Ragnaros') {
-                this.items[i].sellIn = this.items[i].sellIn - 1;
-            }
-            if (this.items[i].sellIn < 0) {
-                if (this.items[i].name != 'Aged Brie') {
-                    if (this.items[i].name != 'Backstage passes to a TAFKAL80ETC concert') {
-                        if (this.items[i].quality > 0) {
-                            if (this.items[i].name != 'Sulfuras, Hand of Ragnaros') {
-                                this.items[i].quality = this.items[i].quality - 1
-                            }
-                        }
+            const item = this.items[i];
+            const baseItemName = item.name.replace(/^Conjured /, '');
+            switch (baseItemName) {
+                case 'Aged Brie':
+                    if (isExpired(item)) {
+                       increaseItemQuality(item, 2);
                     } else {
-                        this.items[i].quality = this.items[i].quality - this.items[i].quality
+                       increaseItemQuality(item, 1);
                     }
-                } else {
-                    if (this.items[i].quality < 50) {
-                        this.items[i].quality = this.items[i].quality + 1
+                    ageItem(item);
+                break;
+                case 'Sulfuras, Hand of Ragnaros':
+                    // no change to quality or sellIn
+                break;
+                case 'Backstage passes to a TAFKAL80ETC concert':
+                    if (item.sellIn > 10) {
+                       increaseItemQuality(item, 1);
+                    } else if (item.sellIn > 5) {
+                       increaseItemQuality(item, 2);
+                    } else if (item.sellIn > 0) {
+                       increaseItemQuality(item, 3);
+                    } else {
+                        item.quality = 0;
                     }
-                }
+                    ageItem(item);
+                break;
+                default:
+                    if (isExpired(item)) {
+                        isConjured(item) ? decreaseItemQuality(item, 4) : decreaseItemQuality(item, 2);
+                    } else {
+                        isConjured(item) ? decreaseItemQuality(item, 2) : decreaseItemQuality(item, 1);
+                    }
+                    ageItem(item);
+                break;
             }
         }
 
         return this.items;
     }
+}
+
+function increaseItemQuality(item, amount) {
+    item.quality = Math.min(item.quality + amount, 50);
+}
+
+function decreaseItemQuality(item, amount) {
+    item.quality = Math.max(item.quality - amount, 0);
+}
+
+function ageItem(item) {
+    item.sellIn = item.sellIn - 1;
+}
+
+function isExpired(item) {
+    return item.sellIn <= 0;
+}
+
+function isConjured(item) {
+    return item.name.indexOf('Conjured ') === 0;
 }
